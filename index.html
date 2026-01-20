@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QR Code Generator</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Fonts: Playfair Display (Serif) & Lato (Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- QR Library -->
+    <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+
+    <!-- Tailwind Config for Corporate Theme -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Lato', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        navy: {
+                            800: '#162A4B', // Corporate Dark Blue
+                            900: '#0F1E36',
+                        },
+                        gold: {
+                            400: '#C5A065', // Muted Gold accent
+                            500: '#B08D55',
+                            600: '#907242',
+                        },
+                        stone: {
+                            50: '#F9F9F9',
+                            100: '#F5F5F5',
+                            200: '#E5E5E5',
+                        }
+                    },
+                    boxShadow: {
+                        'subtle': '0 2px 15px rgba(0, 0, 0, 0.03)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Corporate Styling Overrides */
+        body {
+            background-color: #F9F9F9;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Sharp edges for a professional look */
+        .sharp {
+            border-radius: 0;
+        }
+
+        /* Custom Form Elements - Underlined Style */
+        .input-corporate {
+            border: 1px solid #d1d5db;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+        .input-corporate:focus {
+            border-color: #162A4B;
+            ring: 0;
+            outline: none;
+            box-shadow: 0 0 0 1px #162A4B;
+        }
+
+        /* Custom Radio Buttons */
+        input[type="radio"]:checked + div {
+            border-color: #162A4B;
+            background-color: #162A4B;
+            color: white;
+        }
+        input[type="radio"]:checked + div svg {
+            color: #C5A065; /* Gold Icon */
+        }
+
+        /* Select styling */
+        select.input-corporate {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23162A4B' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.75rem center;
+            background-repeat: no-repeat;
+            background-size: 1.2em 1.2em;
+            padding-right: 2.5rem;
+            -webkit-appearance: none;
+        }
+
+        .btn-gold-hover:hover {
+            background-color: #B08D55;
+        }
+
+        /* Loader for QR generation */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #162A4B;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <!-- Abstract Logo Mark -->
+                <div class="w-10 h-10 bg-navy-800 flex items-center justify-center text-gold-400 font-serif font-bold text-xl">
+                    Q
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-serif text-2xl text-navy-800 tracking-wide">QR Code Generator</span>
+                    <span class="font-sans text-[10px] uppercase tracking-[0.2em] text-gray-500">Enterprise Edition</span>
+                </div>
+            </div>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#" class="text-sm uppercase tracking-widest text-navy-800 font-semibold border-b-2 border-navy-800 pb-1">Generator</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-12 pb-20 px-6 lg:px-12 max-w-7xl mx-auto w-full">
+
+        <div class="mb-12 border-l-4 border-gold-400 pl-6">
+            <h1 class="font-serif text-4xl text-navy-800 mb-3">Create New Code</h1>
+            <p class="font-sans text-gray-600 max-w-2xl font-light text-lg">
+                Create secure, high-resolution QR codes for your enterprise needs. <br>Designed for clarity and precision.
+            </p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-12 items-start">
+
+            <!-- Left Column: Configuration -->
+            <div class="w-full lg:w-2/3 space-y-8">
+
+                <!-- Step 1: Content Type -->
+                <section class="bg-white p-8 border border-gray-200 shadow-subtle">
+                    <h2 class="font-serif text-xl text-navy-800 mb-6 flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full border border-navy-800 flex items-center justify-center text-xs font-bold text-navy-800">1</span>
+                        Select Format
+                    </h2>
+
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="contentType" value="url" class="peer sr-only" checked>
+                            <div class="flex flex-col items-center justify-center py-6 px-2 border border-gray-200 bg-stone-50 transition-all sharp group-hover:border-navy-800">
+                                <svg class="w-6 h-6 text-gray-400 mb-3 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Website</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="contentType" value="text" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center py-6 px-2 border border-gray-200 bg-stone-50 transition-all sharp group-hover:border-navy-800">
+                                <svg class="w-6 h-6 text-gray-400 mb-3 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Text</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="contentType" value="wifi" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center py-6 px-2 border border-gray-200 bg-stone-50 transition-all sharp group-hover:border-navy-800">
+                                <svg class="w-6 h-6 text-gray-400 mb-3 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">WiFi</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="contentType" value="vcard" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center py-6 px-2 border border-gray-200 bg-stone-50 transition-all sharp group-hover:border-navy-800">
+                                <svg class="w-6 h-6 text-gray-400 mb-3 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Card</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="contentType" value="paypal" class="peer sr-only">
+                            <div class="flex flex-col items-center justify-center py-6 px-2 border border-gray-200 bg-stone-50 transition-all sharp group-hover:border-navy-800">
+                                <svg class="w-6 h-6 text-gray-400 mb-3 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Pay</span>
+                            </div>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Step 2: Details -->
+                <section class="bg-white p-8 border border-gray-200 shadow-subtle">
+                    <h2 class="font-serif text-xl text-navy-800 mb-6 flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full border border-navy-800 flex items-center justify-center text-xs font-bold text-navy-800">2</span>
+                        Enter Data
+                    </h2>
+
+                    <!-- Dynamic Inputs -->
+                    <div id="dynamicInputs" class="space-y-6">
+                        <!-- Content Injected via JS -->
+                    </div>
+                </section>
+
+                <!-- Section 3 (Refine) removed as requested -->
+
+            </div>
+
+            <!-- Right Column: Preview -->
+            <div class="w-full lg:w-1/3">
+                <div class="sticky top-28">
+                    <div class="bg-navy-800 text-white p-8 sharp shadow-2xl relative overflow-hidden">
+                        <!-- Decorative thin gold line -->
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gold-500"></div>
+
+                        <h3 class="font-serif text-2xl mb-8 text-center text-white">Preview</h3>
+
+                        <!-- QR Container -->
+                        <div class="bg-white p-4 mx-auto w-full max-w-[280px] aspect-square flex items-center justify-center sharp shadow-inner" id="previewWrapper">
+                            <div id="qrcode-container" class="flex items-center justify-center w-full h-full">
+                                <!-- Placeholder State -->
+                                <div class="text-center opacity-30">
+                                    <span class="block text-navy-800 text-xs uppercase tracking-widest">Awaiting Input</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="mt-6 text-center text-navy-200 text-xs font-light tracking-wide opacity-60">
+                            Generated client-side. Secure & Private.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <footer class="mt-24 border-t border-gray-300 pt-8 text-center">
+            <p class="text-gray-400 text-xs uppercase tracking-widest font-sans">&copy; 2024 Corporate Services. All Rights Reserved.</p>
+        </footer>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- Core Elements ---
+        const dom = {
+            inputsContainer: document.getElementById('dynamicInputs'),
+            qrcodeContainer: document.getElementById('qrcode-container'),
+            typeRadios: document.querySelectorAll('input[name="contentType"]'),
+        };
+
+        let currentType = 'url';
+        let qrcodeInstance = null;
+        let debounceTimer;
+
+        // --- Templates ---
+        const templates = {
+            url: `
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Website URL</label>
+                    <input type="url" id="inp_url" placeholder="https://www.example.com" 
+                        class="input-corporate w-full p-4 bg-stone-50 text-navy-900 font-serif"
+                        value=""> 
+                </div>`,
+            text: `
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Message Content</label>
+                    <textarea id="inp_text" rows="4" placeholder="Enter text content..." 
+                        class="input-corporate w-full p-4 bg-stone-50 text-navy-900 font-serif"></textarea>
+                </div>`,
+            wifi: `
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Network SSID</label>
+                        <input type="text" id="inp_ssid" placeholder="Network Name" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                    </div>
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Password</label>
+                            <input type="text" id="inp_pass" placeholder="Key" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Security Protocol</label>
+                            <select id="inp_enc" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                                <option value="WPA">WPA/WPA2</option>
+                                <option value="WEP">WEP</option>
+                                <option value="nopass">None</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>`,
+            vcard: `
+                <div class="space-y-5">
+                    <div class="grid grid-cols-2 gap-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">First Name</label>
+                            <input type="text" id="inp_fn" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Last Name</label>
+                            <input type="text" id="inp_ln" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Mobile</label>
+                        <input type="tel" id="inp_tel" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Email</label>
+                        <input type="email" id="inp_email" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Organization</label>
+                        <input type="text" id="inp_org" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                    </div>
+                </div>`,
+            paypal: `
+                <div class="space-y-5">
+                     <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">PayPal Account Email</label>
+                        <input type="email" id="inp_pp_email" placeholder="email@address.com" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Amount (Optional)</label>
+                        <input type="number" id="inp_pp_amount" placeholder="0.00" class="input-corporate w-full p-4 bg-stone-50 text-navy-900">
+                    </div>
+                </div>`
+        };
+
+        // --- Functions ---
+
+        function init() {
+            renderInputs();
+            addEventListeners();
+        }
+
+        function renderInputs() {
+            dom.inputsContainer.innerHTML = templates[currentType];
+
+            // Add listeners to new inputs
+            const inputs = dom.inputsContainer.querySelectorAll('input, select, textarea');
+            inputs.forEach(el => {
+                el.addEventListener('input', () => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(generateQR, 300);
+                });
+            });
+        }
+
+        function getDataString() {
+            const getVal = (id) => document.getElementById(id)?.value.trim() || '';
+
+            switch(currentType) {
+                case 'url': 
+                    const url = getVal('inp_url');
+                    return (url && (url.startsWith('http') || url.startsWith('www'))) ? url : (url ? 'https://' + url : '');
+                case 'text':
+                    return getVal('inp_text');
+                case 'wifi':
+                    const ssid = getVal('inp_ssid');
+                    const pass = getVal('inp_pass');
+                    const enc = getVal('inp_enc');
+                    return ssid ? `WIFI:S:${ssid};T:${enc};P:${pass};;` : '';
+                case 'vcard':
+                    const fn = getVal('inp_fn');
+                    const ln = getVal('inp_ln');
+                    const tel = getVal('inp_tel');
+                    const email = getVal('inp_email');
+                    const org = getVal('inp_org');
+                    if(!fn && !ln && !tel) return '';
+                    let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:${ln};${fn}\nFN:${fn} ${ln}\nTEL:${tel}\nEMAIL:${email}`;
+                    if(org) vcard += `\nORG:${org}`;
+                    vcard += `\nEND:VCARD`;
+                    return vcard;
+                case 'paypal':
+                    const ppEmail = getVal('inp_pp_email');
+                    const amt = getVal('inp_pp_amount');
+                    if(!ppEmail) return '';
+                    let link = `https://www.paypal.com/paypalme/${ppEmail}`;
+                    if(amt) link += `/${amt}`;
+                    return link;
+                default: return '';
+            }
+        }
+
+        function generateQR() {
+            const data = getDataString();
+
+            dom.qrcodeContainer.innerHTML = '';
+
+            if (!data) {
+                dom.qrcodeContainer.innerHTML = `
+                    <div class="text-center opacity-30">
+                        <span class="block text-navy-800 text-xs uppercase tracking-widest">Awaiting Input</span>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                // Using hardcoded corporate defaults since UI controls were removed
+                qrcodeInstance = new QRCode(dom.qrcodeContainer, {
+                    text: data,
+                    width: 600, // High Res
+                    height: 600,
+                    colorDark: '#162A4B', // Navy 800
+                    colorLight: '#ffffff', // White
+                    correctLevel: QRCode.CorrectLevel.Q // High (25%)
+                });
+
+                // Fix canvas styles for responsive scaling
+                setTimeout(() => {
+                    const canvas = dom.qrcodeContainer.querySelector('canvas');
+                    const img = dom.qrcodeContainer.querySelector('img');
+                    if(canvas) {
+                        canvas.style.width = '100%';
+                        canvas.style.height = 'auto';
+                    }
+                    if(img) {
+                        img.style.width = '100%';
+                        img.style.height = 'auto';
+                        img.style.display = 'block'; // Ensure block display
+                    }
+                }, 0);
+
+            } catch (e) {
+                console.error("QR Generation Error", e);
+            }
+        }
+
+        function addEventListeners() {
+            // Type Switcher
+            dom.typeRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    currentType = e.target.value;
+                    renderInputs();
+                    generateQR();
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
+
+
